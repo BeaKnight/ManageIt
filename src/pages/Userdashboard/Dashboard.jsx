@@ -2,6 +2,7 @@ import { useState, useReducer, useEffect, useCallback, memo, useRef } from 'reac
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar';
 import Icon from '../../components/Icon';
+import ScheduleSidebar from '../../components/ScheduleSidebar';
 
 // Custom Hooks
 const useClickOutside = (ref, handler) => {
@@ -49,7 +50,6 @@ const DASHBOARD_CARDS = [
   { text: 'Transportation', icon: CARD_ICONS.Transportation },
   { text: 'Reservation', icon: CARD_ICONS.Reservation }
 ];
-const SCHEDULE_ITEMS = ['Team Meeting', 'Project Deadline', 'System Maintenance'];
 
 const DashboardCard = memo(({ item, onClick }) => (
   <div
@@ -122,24 +122,6 @@ const Header = memo(({
     </header>
   );
 });
-
-const ScheduleSidebar = memo(() => (
-  <aside className="hidden lg:block lg:w-1/4 bg-white/90 p-4 border-l backdrop-blur-sm">
-    <h2 className="text-xl font-bold mb-4 text-gray-800">Reminders</h2>
-    <div className="space-y-3">
-      {SCHEDULE_ITEMS.map((event) => (
-        <div 
-          key={event} 
-          className="p-3 bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative"
-        >
-          <div className="absolute left-3 top-3.5 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-          <p className="text-sm text-gray-700 pl-4 font-medium">{event}</p>
-          <span className="text-xs text-gray-400 pl-4">Today 3:00 PM</span>
-        </div>
-      ))}
-    </div>
-  </aside>
-));
 
 const DashboardContent = memo(({ onCardClick }) => (
   <main className="flex-1 p-6 overflow-hidden bg-white/95 backdrop-blur-sm">

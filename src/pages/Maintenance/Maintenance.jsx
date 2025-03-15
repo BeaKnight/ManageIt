@@ -1,5 +1,8 @@
 import { useState, useReducer, useEffect, useCallback, memo, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import Sidebar from '../../components/Sidebar';
+import Icon from '../../components/Icon';
+import ScheduleSidebar from '../../components/ScheduleSidebar';
 
 // Custom Hooks
 const useClickOutside = (ref, handler) => {
@@ -29,10 +32,10 @@ const sidebarReducer = (state, action) => {
 
 // Constants
 const CARD_ICONS = {
-  Janitorial: "M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437 1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008Z",
+  Janitorial: "M3 6h18 M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6 M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2 M10 11v6 M14 11v6",
   Carpentry: "M15 12l-8.373 8.373a1 1 0 1 1-3-3L12 9 M18 15l4-4 M21.5 11.5l-1.914-1.914A2 2 0 0 1 19 8.172V7l-2.26-2.26a6 6 0 0 0-4.202-1.756L9 2.96l.92.82A6.18 6.18 0 0 1 12 8.4V10l2 2h1.172a2 2 0 0 1 1.414.586L18.5 14.5",
   Electrical: "M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z",
-  "Air-Conditioning": "M10 20l-1.25-2.5L6 18 M10 4L8.75 6.5 6 6 M14 20l1.25-2.5L18 18 M14 4l1.25 2.5L18 6 M17 21l-3-6h-4 M17 3l-3 6 1.5 3 M2 12h6.5L10 9 M20 10l-1.5 2 1.5 2 M22 12h-6.5L14 15 M4 10l1.5 2L4 14 M7 21l3-6-1.5-3 M7 3l3 6h4",
+  AirConditioning: "M10 20l-1.25-2.5L6 18 M10 4L8.75 6.5 6 6 M14 20l1.25-2.5L18 18 M14 4l1.25 2.5L18 6 M17 21l-3-6h-4 M17 3l-3 6 1.5 3 M2 12h6.5L10 9 M20 10l-1.5 2 1.5 2 M22 12h-6.5L14 15 M4 10l1.5 2L4 14 M7 21l3-6-1.5-3 M7 3l3 6h4",
 };
 
 const MENU_ITEMS = [
@@ -63,25 +66,12 @@ const MENU_ITEMS = [
   }
 ];
 
-const DASHBOARD_CARDS = ['Janitorial', 'Carpentry', 'Electrical','Air-Conditioning'];
-const SCHEDULE_ITEMS = ['Team Meeting', 'Project Deadline', 'System Maintenance'];
-
-// Components
-const Icon = memo(({ path, className }) => (
-  <svg 
-    className={className}
-    fill="none" 
-    stroke="currentColor" 
-    viewBox="0 0 24 24"
-  >
-    <path 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-      strokeWidth={2} 
-      d={path} 
-    />
-  </svg>
-));
+const DASHBOARD_CARDS = [
+  { text: 'Janitorial', icon: CARD_ICONS.Janitorial },
+  { text: 'Carpentry', icon: CARD_ICONS.Carpentry },
+  { text: 'Electrical', icon: CARD_ICONS.Electrical},
+  { text: 'Air-Conditioning', icon: CARD_ICONS.AirConditioning}
+];
 
 const DashboardCard = memo(({ item, onClick }) => (
   <div
@@ -90,41 +80,14 @@ const DashboardCard = memo(({ item, onClick }) => (
   >
     <div className="flex items-center gap-3">
       <Icon 
-        path={CARD_ICONS[item]} 
+        path={item.icon} 
         className="w-8 h-8 text-blue-600 group-hover:text-blue-700 transition-colors"
       />
       <h3 className="text-lg md:text-xl font-bold text-gray-800">
-        {item}
+        {item.text}
       </h3>
     </div>
   </div>
-));
-const SidebarItem = memo(({ item, isSidebarCollapsed }) => (
-  <NavLink
-    to={item.to}
-    className={({ isActive }) => 
-      `flex items-center p-2 rounded-lg hover:bg-gray-700 transition-all group relative ${
-        isActive ? 'bg-gray-800' : ''
-      }`}
-  >
-    <div className="w-6 h-6 flex-shrink-0 flex items-center justify-center"> 
-      <Icon 
-        path={item.icon} 
-        className="w-full h-full transition-transform hover:scale-110" 
-      />
-    </div>
-    <span className={`ml-3 transition-all duration-300 ${
-      !isSidebarCollapsed ? 'opacity-100 max-w-40' : 'opacity-0 max-w-0 overflow-hidden'
-    }`}>
-      {item.text}
-    </span>
-    
-    {isSidebarCollapsed && (
-      <span className="absolute left-full ml-2 px-2 py-1 text-sm bg-gray-900 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
-        {item.text}
-      </span>
-    )}
-  </NavLink>
 ));
 
 const Header = memo(({ 
@@ -181,66 +144,6 @@ const Header = memo(({
     </header>
   );
 });
-const Sidebar = memo(({ 
-  isSidebarCollapsed, 
-  onToggleSidebar 
-}) => (
-  <aside className={`hidden md:block bg-gray-900 text-white transition-[width] duration-300 ease-in-out relative h-full z-20 ${
-    isSidebarCollapsed ? 'w-16' : 'w-64'
-  }`}>
-    <div className="p-4 flex flex-col justify-between h-full">
-      <div>
-        <button
-          onClick={onToggleSidebar}
-          className="w-full bg-gray-900 text-white p-2 rounded-lg border-2 border-white transition-colors mb-4 text-sm hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          {isSidebarCollapsed ? '☰' : 'Collapse'}
-        </button>
-
-        <h2 className={`text-sm md:text-base font-bold mb-4 transition-opacity ${
-          !isSidebarCollapsed ? 'opacity-100' : 'opacity-0'
-        }`}>
-          USER
-        </h2>
-
-        <nav className="space-y-2">
-          {MENU_ITEMS.map((item) => (
-            <SidebarItem
-              key={item.text}
-              item={item}
-              isSidebarCollapsed={isSidebarCollapsed}
-            />
-          ))}
-        </nav>
-      </div>
-
-      <div className={`text-center text-xs md:text-sm text-gray-400 transition-opacity ${
-        !isSidebarCollapsed ? 'opacity-100' : 'opacity-0'
-      }`}>
-        Created By Bantilan & Friends
-      </div>
-    </div>
-  </aside>
-));
-
-
-const ScheduleSidebar = memo(() => (
-  <aside className="hidden lg:block lg:w-1/4 bg-white/90 p-4 border-l backdrop-blur-sm">
-    <h2 className="text-xl font-bold mb-4 text-gray-800">Reminders</h2>
-    <div className="space-y-3">
-      {SCHEDULE_ITEMS.map((event) => (
-        <div 
-          key={event} 
-          className="p-3 bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative"
-        >
-          <div className="absolute left-3 top-3.5 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-          <p className="text-sm text-gray-700 pl-4 font-medium">{event}</p>
-          <span className="text-xs text-gray-400 pl-4">Today 3:00 PM</span>
-        </div>
-      ))}
-    </div>
-  </aside>
-));
 
 const DashboardContent = memo(({ onCardClick }) => (
   <main className="flex-1 p-6 overflow-hidden bg-white/95 backdrop-blur-sm">
@@ -250,7 +153,7 @@ const DashboardContent = memo(({ onCardClick }) => (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4">
       {DASHBOARD_CARDS.map((item) => (
         <DashboardCard
-          key={item}
+          key={item.text}
           item={item}
           onClick={() => onCardClick(item)}
         />
@@ -259,7 +162,6 @@ const DashboardContent = memo(({ onCardClick }) => (
   </main>
 ));
 
-// Main Component
 const Maintenance = () => {
   const navigate = useNavigate();
   const [state, dispatch] = useReducer(sidebarReducer, {
@@ -268,10 +170,10 @@ const Maintenance = () => {
   });
 
   const handleNavigation = useCallback((item) => {
-    if (item === 'Janitorial') navigate('/Janitorial');
-    if (item === 'Carpentry') navigate('/Carpentry');
-    if (item === 'Electrical') navigate('/Electrical');
-    if (item === 'Air-Conditioning') navigate('/AirConditioning');
+    if (item.text === 'Janitorial') navigate('/Janitorial');
+    if (item.text === 'Carpentry') navigate('/Carpentry');
+    if (item.text === 'Electrical') navigate('/Electrical');
+    if (item.text === 'Air-Conditioning') navigate('/AirConditioning');
   }, [navigate]);
 
   return (
@@ -286,6 +188,7 @@ const Maintenance = () => {
         <Sidebar
           isSidebarCollapsed={state.isSidebarCollapsed}
           onToggleSidebar={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
+          menuItems={MENU_ITEMS} // Ensure menuItems is passed correctly
         />
         
         <DashboardContent onCardClick={handleNavigation} />
