@@ -1,13 +1,13 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Loginpage from "./Loginpage"; // Ensure correct import path
-import Dashboard from "./Dashboard"; // Ensure correct import path
-import Maintenace from "./Maintenance";
-import Carpentry from "./Carpentry";
-import Janitorial from "./Janitorial";
-import Electrical from "./Electrical";
-import AirConditioning from "./AirConditioning";
-import Notifications from "./Notifications";
-import Schedules from "./Schedules";
+import Loginpage from "./pages/LoginScreen/Loginpage"; 
+import Dashboard from "./pages/Userdashboard/Dashboard"; 
+import Maintenace from "./pages/Maintenance/Maintenance";
+import Carpentry from "./pages/Maintenance/Carpentry";
+import Janitorial from "./pages/Maintenance/Janitorial";
+import Electrical from "./pages/Maintenance/Electrical";
+import AirConditioning from "./pages/Maintenance/AirConditioning";
+import Notifications from "./pages/Userdashboard/Notifications";
+import Schedules from "./pages/Userdashboard/Schedules";
 
 function App() {
   return (
