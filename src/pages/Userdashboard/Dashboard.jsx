@@ -149,7 +149,7 @@ const DashboardContent = memo(({ onCardClick }) => (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
       {DASHBOARD_CARDS.map((item) => (
         <DashboardCard
-          key={item}
+          key={item.text}
           item={item}
           onClick={() => onCardClick(item)}
         />
@@ -167,7 +167,19 @@ const Dashboard = () => {
   });
 
   const handleNavigation = useCallback((item) => {
-    if (item === 'Maintenance') navigate('/maintenance');
+    switch (item.text) {
+      case 'Maintenance':
+        navigate('/maintenance');
+        break;
+      case 'Transportation':
+        navigate('/transportation');
+        break;
+      case 'Reservation':
+        navigate('/reservation');
+        break;
+      default:
+        break;
+    }
   }, [navigate]);
 
   return (
