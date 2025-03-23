@@ -32,19 +32,20 @@ const sidebarReducer = (state, action) => {
 const MENU_ITEMS = [
   { 
     text: "Dashboard",
-    to: "/dashboard",
+    to: "/admindashboard",
     icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
   },
   {
     text: "Notifications",
-    to: "/notifications",
+    to: "/adminnotifications",
     icon: "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
   },
   {
     text: "Schedules",
-    to: "/schedules",
+    to: "/adminschedules",
     icon: "M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z M16 2v4 M3 10h18 M8 2v4 M17 14h-6 M13 18H7 M7 14h.01 M17 18h.01"
   },
+  { text: "Requests", to: "/requests", icon: "M9 2h6a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2 M12 11h4 M12 16h4 M8 11h.01 M8 16h.01"},
   {
     text: "Settings",
     to: "/settings",
@@ -112,38 +113,51 @@ const Header = memo(({
   );
 });
 
-const DashboardContent = memo(({ onCardClick }) => (
+const DashboardContent = memo(({ onCardClick, requests }) => (
   <main className="flex-1 p-4 md:p-6 lg:p-8 bg-white/95 backdrop-blur-sm overflow-y-auto">
     <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-gray-900 border-b mb-4 md:mb-6 pb-3 md:pb-4">
-      Notifications
+      Requests
     </h2>
 
     <div className="bg-white rounded-lg shadow-sm md:shadow-lg border border-gray-200">
       {/* Mobile/Tablet View (Stacked Cards) */}
       <div className="lg:hidden space-y-4 p-2 sm:p-4">
-        {[...Array(3)].map((_, index) => (
+        {requests.map((request, index) => (
           <div key={index} className="border-2 border-gray-100 rounded-lg p-4 space-y-3 divide-y divide-gray-100">
+            {/* Existing fields */}
             <div className="flex justify-between items-center pb-2">
               <span className="text-sm font-semibold">Date Requested:</span>
-              <span className="text-sm text-gray-900 font-medium">-</span>
+              <span className="text-sm text-gray-900 font-medium">{request.date_requested}</span>
             </div>
             <div className="flex justify-between items-center pt-2 pb-2">
               <span className="text-sm font-semibold">Requesting Office:</span>
-              <span className="text-sm text-gray-900 font-medium">-</span>
+              <span className="text-sm text-gray-900 font-medium">{request.requesting_office}</span>
             </div>
             <div className="flex justify-between items-center pt-2 pb-2">
               <span className="text-sm font-semibold">Requesting Personnel:</span>
-              <span className="text-sm text-gray-900 font-medium">-</span>
+              <span className="text-sm text-gray-900 font-medium">{request.requesting_personnel}</span>
             </div>
             <div className="flex justify-between items-center pt-2 pb-2">
               <span className="text-sm font-semibold">Type:</span>
-              <span className="text-sm text-gray-900 font-medium">-</span>
+              <span className="text-sm text-gray-900 font-medium">{request.type || 'N/A'}</span>
             </div>
-            <div className="flex justify-between items-center pt-2">
+            <div className="flex justify-between items-center pt-2 pb-2">
               <span className="text-sm font-semibold">Status:</span>
-              <span className="bg-red-500 text-white px-3 py-1 text-xs rounded-full font-medium shadow-sm">
-                Pending
+              <span className={`bg-${request.status === 'Pending' ? 'red' : 'green'}-500 text-white px-3 py-1 text-xs rounded-full font-medium shadow-sm`}>
+                {request.status}
               </span>
+            </div>
+            {/* New Requests Slip section */}
+            <div className="pt-3">
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-semibold">Requests Slip:</span>
+                <button 
+                  onClick={() => onCardClick(request.id)}
+                  className="w-full bg-green-500 hover:bg-green-600 text-white text-sm font-medium py-2 px-4 rounded-lg text-center transition-colors"
+                >
+                  View/Process Request
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -153,6 +167,7 @@ const DashboardContent = memo(({ onCardClick }) => (
       <table className="hidden lg:table w-full border-collapse">
         <thead>
           <tr className="bg-gray-50 border-b-2 border-gray-200">
+            {/* Existing headers */}
             <th className="text-sm md:text-base p-3 text-left font-semibold text-gray-900 border-r border-gray-700">
               Date Requested
             </th>
@@ -165,25 +180,39 @@ const DashboardContent = memo(({ onCardClick }) => (
             <th className="text-sm md:text-base p-3 text-left font-semibold text-gray-900 border-r border-gray-700">
               Type
             </th>
-            <th className="text-sm md:text-base p-3 text-left font-semibold text-gray-900">
+            <th className="text-sm md:text-base p-3 text-left font-semibold text-gray-900 border-r border-gray-700">
               Status
+            </th>
+            {/* New Requests Slip header */}
+            <th className="text-sm md:text-base p-3 text-left font-semibold text-gray-900">
+              Requests Slip
             </th>
           </tr>
         </thead>
         <tbody>
-          {[...Array(3)].map((_, index) => (
+          {requests.map((request, index) => (
             <tr 
               key={index} 
               className="hover:bg-gray-50 even:bg-gray-50 border-b border-gray-400"
             >
-              <td className="text-sm p-3 font-medium text-gray-900 border-r border-gray-700">-</td>
-              <td className="text-sm p-3 font-medium text-gray-900 border-r border-gray-700">-</td>
-              <td className="text-sm p-3 font-medium text-gray-900 border-r border-gray-700">-</td>
-              <td className="text-sm p-3 font-medium text-gray-900 border-r border-gray-700">-</td>
-              <td className="text-sm p-3 text-center">
-                <span className="inline-block bg-red-500 text-white px-3 py-1 text-sm rounded-full font-medium shadow-sm">
-                  Pending
+              {/* Existing cells */}
+              <td className="text-sm p-3 font-medium text-gray-900 border-r border-gray-700">{request.date_requested}</td>
+              <td className="text-sm p-3 font-medium text-gray-900 border-r border-gray-700">{request.requesting_office}</td>
+              <td className="text-sm p-3 font-medium text-gray-900 border-r border-gray-700">{request.requesting_personnel}</td>
+              <td className="text-sm p-3 font-medium text-gray-900 border-r border-gray-700">{request.type || 'N/A'}</td>
+              <td className="text-sm p-3 text-center border-r border-gray-700">
+                <span className={`inline-block bg-${request.status === 'Pending' ? 'red' : 'green'}-500 text-white px-1 py-2 text-sm rounded-lg font-medium shadow-sm`}>
+                  {request.status}
                 </span>
+              </td>
+              {/* New Requests Slip cell */}
+              <td className="text-sm p-3 text-center">
+                <button
+                  onClick={() => onCardClick(request.id)}
+                  className="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-1 rounded-lg inline-block transition-colors"
+                >
+                  Open Form
+                </button>
               </td>
             </tr>
           ))}
@@ -192,18 +221,123 @@ const DashboardContent = memo(({ onCardClick }) => (
     </div>
   </main>
 ));
+const MaintenanceRequestsList = ({ token }) => {
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedRequest, setSelectedRequest] = useState(null);
 
-// Main Component
-const Notifications = () => {
+  useEffect(() => {
+    fetch("http://192.168.127.187:8000/api/maintenance-requests?status=Pending", {
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Accept": "application/json"
+      }
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        setRequests(data.data);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error("Error fetching requests:", error);
+        setLoading(false);
+      });
+  }, [token]);
+
+  const handleRequestClick = (id) => {
+    fetch(`http://192.168.127.187:8000/api/maintenance-requests/${id}`, {
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Accept": "application/json"
+      }
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        setSelectedRequest(data.data);
+      })
+      .catch(error => {
+        console.error("Error fetching request details:", error);
+      });
+  };
+
+  if (loading) return <p>Loading...</p>;
+  if (!requests.length) return <p>No pending requests found.</p>;
+
+  return (
+    <div>
+      <h2>Pending Maintenance Requests</h2>
+      <ul>
+        {requests.map(request => (
+          <li key={request.id} onClick={() => handleRequestClick(request.id)}>
+            <strong>{request.details}</strong> - {request.status}
+            <br /> Requested by {request.requesting_personnel} on {request.date_requested}
+          </li>
+        ))}
+      </ul>
+      {selectedRequest && (
+        <div>
+          <h3>Request Details</h3>
+          <p><strong>ID:</strong> {selectedRequest.id}</p>
+          <p><strong>Details:</strong> {selectedRequest.details}</p>
+          <p><strong>Status:</strong> {selectedRequest.status}</p>
+          <p><strong>Requested by:</strong> {selectedRequest.requesting_personnel}</p>
+          <p><strong>Date Requested:</strong> {selectedRequest.date_requested}</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const AdminRequests = ({ token }) => {
   const navigate = useNavigate();
   const [state, dispatch] = useReducer(sidebarReducer, {
     isSidebarCollapsed: true,
     isMobileMenuOpen: false
   });
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleNavigation = useCallback((item) => {
-    if (item === 'Maintenance') navigate('/maintenance');
+  useEffect(() => {
+    fetch("http://192.168.127.187:8000/api/maintenance-requests?status=Pending", {
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Accept": "application/json"
+      }
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        setRequests(data.data);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error("Error fetching requests:", error);
+        setLoading(false);
+      });
+  }, [token]);
+
+  const handleRequestClick = useCallback((id) => {
+    // Store the request ID in localStorage or state management
+    localStorage.setItem('currentRequestId', id);
+    navigate(`/admincarpentryform/${id}`);
   }, [navigate]);
+
+  if (loading) return <p>Loading...</p>;
+  if (!requests.length) return <p>No pending requests found.</p>;
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
@@ -218,13 +352,14 @@ const Notifications = () => {
           isSidebarCollapsed={state.isSidebarCollapsed}
           onToggleSidebar={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
           menuItems={MENU_ITEMS}
-          title="USER"
+          title="ADMIN"
         />
         
-        <DashboardContent onCardClick={handleNavigation} />
+        <DashboardContent onCardClick={handleRequestClick} requests={requests} />
       </div>
     </div>
   );
 };
 
-export default Notifications;
+
+export default AdminRequests;

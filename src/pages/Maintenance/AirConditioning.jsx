@@ -1,6 +1,91 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const AirConditioning = () => {
+  const navigate = useNavigate();
+
+  // State for form inputs
+  const [date_requested, setDateRequested] = useState("");
+  const [details, setSpecificDetails] = useState("");
+  const [requesting_personnel, setRequestingPersonnel] = useState("");
+  const [position, setPosition] = useState("");
+  const [requesting_office, setRequestingOffice] = useState("");
+  const [contact_number, setContactNumber] = useState("");
+
+  // State for handling errors and loading
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  // State for success message
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    console.log("Token:", token); // Log the token for debugging
+
+    if (!token) {
+      setError("Unauthorized: Please log in.");
+      return;
+    }
+
+    // Form validation
+    if (!date_requested || !details || !requesting_personnel || !position || !requesting_office || !contact_number) {
+      setError("Please fill in all fields");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError("");
+      setSuccessMessage("");
+
+      // Make API request to your backend
+      const response = await fetch('http://192.168.127.187:8000/api/maintenance-requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          date_requested,
+          details,
+          requesting_personnel,
+          position,
+          requesting_office,
+          contact_number
+        }),
+        mode: 'cors'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError("Unauthorized: Please log in.");
+        } else {
+          throw new Error(data.message || "Request submission failed");
+        }
+        return;
+      }
+
+      // Show success message
+      setSuccessMessage("Request submitted successfully!");
+
+      // Navigate back to maintenance page after a short delay
+      setTimeout(() => {
+        navigate('/maintenance');
+      }, 3000); // 3 seconds delay
+
+    } catch (err) {
+      setError(err.message || "An error occurred during request submission");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 px-4 sm:px-6 lg:px-8">
       <div className="bg-white p-6 md:p-8 lg:p-10 shadow-lg rounded-lg w-full max-w-md md:max-w-xl lg:max-w-2xl transition-all duration-300">
@@ -9,10 +94,24 @@ const AirConditioning = () => {
           GENERAL SERVICE OFFICE MANAGEMENT SYSTEM
         </h2>
         <p className="text-sm md:text-base text-center mb-6 md:mb-8">
-        User Request Slip (Air Conditioning Section) <br className="hidden sm:block" />
+          User Request Slip (Air-Conditioning Section) <br className="hidden sm:block" />
         </p>
 
-        <form className="space-y-4 md:space-y-6">
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 text-red-500 p-3 rounded-lg mb-4 text-sm">
+            {error}
+          </div>
+        )}
+
+        {/* Success Message */}
+        {successMessage && (
+          <div className="bg-green-50 text-green-500 p-3 rounded-lg mb-4 text-sm">
+            {successMessage}
+          </div>
+        )}
+
+        <form className="space-y-4 md:space-y-6" onSubmit={handleSubmit}>
           {/* Date Requested */}
           <div>
             <label className="block text-sm md:text-base font-semibold text-gray-700 mb-2">
@@ -21,6 +120,8 @@ const AirConditioning = () => {
             <input 
               type="date" 
               className="w-full border border-gray-300 rounded-lg px-4 py-2 md:py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              value={date_requested}
+              onChange={(e) => setDateRequested(e.target.value)}
             />
           </div>
 
@@ -32,6 +133,8 @@ const AirConditioning = () => {
             <textarea 
               className="w-full border border-gray-300 rounded-lg px-4 py-2 md:py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               rows="3"
+              value={details}
+              onChange={(e) => setSpecificDetails(e.target.value)}
             ></textarea>
           </div>
 
@@ -43,6 +146,8 @@ const AirConditioning = () => {
             <input 
               type="text" 
               className="w-full border border-gray-300 rounded-lg px-4 py-2 md:py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              value={requesting_personnel}
+              onChange={(e) => setRequestingPersonnel(e.target.value)}
             />
           </div>
 
@@ -54,6 +159,8 @@ const AirConditioning = () => {
             <input 
               type="text" 
               className="w-full border border-gray-300 rounded-lg px-4 py-2 md:py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              value={position}
+              onChange={(e) => setPosition(e.target.value)}
             />
           </div>
 
@@ -65,6 +172,8 @@ const AirConditioning = () => {
             <input 
               type="text" 
               className="w-full border border-gray-300 rounded-lg px-4 py-2 md:py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              value={requesting_office}
+              onChange={(e) => setRequestingOffice(e.target.value)}
             />
           </div>
 
@@ -76,6 +185,8 @@ const AirConditioning = () => {
             <input 
               type="text" 
               className="w-full border border-gray-300 rounded-lg px-4 py-2 md:py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              value={contact_number}
+              onChange={(e) => setContactNumber(e.target.value)}
             />
           </div>
 
@@ -84,14 +195,16 @@ const AirConditioning = () => {
             <button 
               type="button" 
               className="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white px-6 py-2 md:py-3 rounded-lg transition-colors duration-200"
+              onClick={() => navigate('/maintenance')}
             >
               Cancel
             </button>
             <button 
               type="submit" 
               className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white px-6 py-2 md:py-3 rounded-lg transition-colors duration-200"
+              disabled={isLoading}
             >
-              Submit
+              {isLoading ? "Submitting..." : "Submit"}
             </button>
           </div>
         </form>

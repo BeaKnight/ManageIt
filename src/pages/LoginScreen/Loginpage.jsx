@@ -1,79 +1,90 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 function LoginPage() {
   const navigate = useNavigate();
-  
+
   // State for form inputs
   const [id, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  
+
   // State for handling errors and loading
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // State for password visibility
   const [showPassword, setShowPassword] = useState(false);
-  
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Form validation
     if (!id || !password) {
       setError("Please enter both user ID and password");
-      return; // Add this return statement to stop form submission
+      return;
     }
-    
+
     try {
       setIsLoading(true);
       setError("");
-      
+
       // Make API request to your backend
-      const response = await fetch('http://127.0.0.1:8000/api/login', {
+      const response = await fetch('http://192.168.127.187:8000/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
           id,
           password,
           rememberMe
         }),
+        mode: 'cors'
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.message || "Login failed");
       }
-      
-      // Store the token in localStorage or sessionStorage
+
+      // Store the token in localStorage
+      localStorage.setItem('token', data.token);
+
+      // Store the token in localStorage or sessionStorage based on rememberMe
       if (rememberMe) {
         localStorage.setItem('authToken', data.token);
       } else {
         sessionStorage.setItem('authToken', data.token);
       }
-      
+
       // Store user info if needed
       localStorage.setItem('user', JSON.stringify(data.user));
-      
-      // Redirect to dashboard on success
-      navigate('/dashboard');
-      
+
+      // Redirect based on user role
+      if (data.user.role === "requester") {
+        navigate('/dashboard');
+      } else if (data.user.role === "approver") {
+        navigate('/admindashboard');
+      } else {
+        navigate('/dashboard');
+      }
+
     } catch (err) {
       setError(err.message || "An error occurred during login");
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   // Toggle password visibility
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
-  
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-gray-100">
       {/* Title */}
@@ -140,7 +151,6 @@ function LoginPage() {
                 className="focus:outline-none text-gray-500 hover:text-gray-700 transition-colors duration-200"
               >
                 {showPassword ? (
-
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -184,6 +194,14 @@ function LoginPage() {
             {isLoading ? "LOADING..." : "LOGIN"}
           </button>
         </form>
+
+        {/* Signup Link */}
+        <div className="mt-6 text-center">
+          <span className="text-sm sm:text-base text-gray-600">Don't have an account? </span>
+          <Link to="/signuppage" className="text-sm sm:text-base text-blue-500 hover:text-blue-600">
+            Signup
+          </Link>
+        </div>
       </div>
     </div>
   );

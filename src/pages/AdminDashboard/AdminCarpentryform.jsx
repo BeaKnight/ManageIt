@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
-const Janitorial = () => {
+const AdminCarpentryform = ({ token }) => {
   const navigate = useNavigate();
+  const { id } = useParams();
 
   // State for form inputs
   const [date_requested, setDateRequested] = useState("");
@@ -11,6 +12,12 @@ const Janitorial = () => {
   const [position, setPosition] = useState("");
   const [requesting_office, setRequestingOffice] = useState("");
   const [contact_number, setContactNumber] = useState("");
+  const [date_received, setDateReceived] = useState("");
+  const [time_received, setTimeReceived] = useState("");
+  const [priority_number, setPriorityNumber] = useState("");
+  const [remarks, setRemarks] = useState("");
+  const [approved_by_1, setVerifiedByName] = useState("");
+  const [approved_by_2, setVerifiedByPosition] = useState("");
 
   // State for handling errors and loading
   const [error, setError] = useState("");
@@ -19,19 +26,57 @@ const Janitorial = () => {
   // State for success message
   const [successMessage, setSuccessMessage] = useState("");
 
+  // Fetch request details when component mounts
+  useEffect(() => {
+    const fetchRequestDetails = async () => {
+      try {
+        const response = await fetch(`http://192.168.127.187:8000/api/maintenance-requests/${id}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Accept": "application/json"
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch request details");
+        }
+
+        const data = await response.json();
+        const requestDetails = data.data;
+
+        if (!requestDetails) {
+          throw new Error("Request details not found");
+        }
+
+        setDateRequested(requestDetails.date_requested || "");
+        setSpecificDetails(requestDetails.details || "");
+        setRequestingPersonnel(requestDetails.requesting_personnel || "");
+        setPosition(requestDetails.position || "");
+        setRequestingOffice(requestDetails.requesting_office || "");
+        setContactNumber(requestDetails.contact_number || "");
+        setDateReceived(requestDetails.date_received || "");
+        setTimeReceived(requestDetails.time_received || "");
+        setPriorityNumber(requestDetails.priority_number || "");
+        setRemarks(requestDetails.remarks || "");
+        setVerifiedByName(requestDetails.verified_by_name || "");
+        setVerifiedByPosition(requestDetails.verified_by_position || "");
+      } catch (error) {
+        console.error("Error fetching request details:", error);
+        setError(error.message);
+      }
+    };
+
+    fetchRequestDetails();
+  }, [id, token]);
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('token');
-    console.log("Token:", token); // Log the token for debugging
-
-    if (!token) {
-      setError("Unauthorized: Please log in.");
-      return;
-    }
 
     // Form validation
-    if (!date_requested || !details || !requesting_personnel || !position || !requesting_office || !contact_number) {
+    if (!daterquested || !details || !requesting_personnel || !position || 
+        !requesting_office || !contact_number || !date_received || !time_received || 
+        !priority_number || !remarks || !approved_by_1 || !approve_by_2) {
       setError("Please fill in all fields");
       return;
     }
@@ -42,12 +87,12 @@ const Janitorial = () => {
       setSuccessMessage("");
 
       // Make API request to your backend
-      const response = await fetch('http://192.168.127.187:8000/api/maintenance-requests', {
-        method: 'POST',
+      const response = await fetch(`http://192.168.127.187:8000/api/maintenance-requests/${id}/review`, {
+        method: 'PUT',
         headers: {
+          "Authorization": `Bearer ${token}`,
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
           date_requested,
@@ -55,7 +100,12 @@ const Janitorial = () => {
           requesting_personnel,
           position,
           requesting_office,
-          contact_number
+          contact_number,
+          date_received,
+          time_received,
+          priority_number,
+          remarks,
+          approved_by: `${approved_by_1} - ${approved_by_2}`
         }),
         mode: 'cors'
       });
@@ -63,12 +113,7 @@ const Janitorial = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        if (response.status === 401) {
-          setError("Unauthorized: Please log in.");
-        } else {
-          throw new Error(data.message || "Request submission failed");
-        }
-        return;
+        throw new Error(data.message || "Request submission failed");
       }
 
       // Show success message
@@ -76,7 +121,7 @@ const Janitorial = () => {
 
       // Navigate back to maintenance page after a short delay
       setTimeout(() => {
-        navigate('/maintenance');
+        navigate('/adminmaintenance');
       }, 3000); // 3 seconds delay
 
     } catch (err) {
@@ -94,7 +139,7 @@ const Janitorial = () => {
           GENERAL SERVICE OFFICE MANAGEMENT SYSTEM
         </h2>
         <p className="text-sm md:text-base text-center mb-6 md:mb-8">
-          User Request Slip (Janitorial Section) <br className="hidden sm:block" />
+          User Request Slip (Carpentry Section) <br className="hidden sm:block" />
         </p>
 
         {/* Error Message */}
@@ -190,12 +235,90 @@ const Janitorial = () => {
             />
           </div>
 
+          {/* Date Received */}
+          <div>
+            <label className="block text-sm md:text-base font-semibold text-gray-700 mb-2">
+              Date Received:
+            </label>
+            <input 
+              type="date" 
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 md:py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              value={date_received}
+              onChange={(e) => setDateReceived(e.target.value)}
+            />
+          </div>
+
+          {/* Time Received */}
+          <div>
+            <label className="block text-sm md:text-base font-semibold text-gray-700 mb-2">
+              Time Received:
+            </label>
+            <input 
+              type="time" 
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 md:py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              value={time_received}
+              onChange={(e) => setTimeReceived(e.target.value)}
+            />
+          </div>
+
+          {/* Priority Number */}
+          <div>
+            <label className="block text-sm md:text-base font-semibold text-gray-700 mb-2">
+              Priority Number:
+            </label>
+            <input 
+              type="number" 
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 md:py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              value={priority_number}
+              onChange={(e) => setPriorityNumber(e.target.value)}
+            />
+          </div>
+
+          {/* Remarks */}
+          <div>
+            <label className="block text-sm md:text-base font-semibold text-gray-700 mb-2">
+              Remarks:
+            </label>
+            <textarea 
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 md:py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              rows="3"
+              value={remarks}
+              onChange={(e) => setRemarks(e.target.value)}
+            ></textarea>
+          </div>
+
+          {/* Verified By */}
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="w-full md:w-1/2">
+              <label className="block text-sm md:text-base font-semibold text-gray-700 mb-2">
+                Verified By (Head):
+              </label>
+              <input 
+                type="text" 
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 md:py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                value={approved_by_1}
+                onChange={(e) => setVerifiedByName(e.target.value)}
+              />
+            </div>
+            <div className="w-full md:w-1/2">
+              <label className="block text-sm md:text-base font-semibold text-gray-700 mb-2">
+                Verified By (Head):
+              </label>
+              <input 
+                type="text" 
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 md:py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                value={approved_by_2}
+                onChange={(e) => setVerifiedByPosition(e.target.value)}
+              />
+            </div>
+          </div>
+
           {/* Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-between">
             <button 
               type="button" 
               className="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white px-6 py-2 md:py-3 rounded-lg transition-colors duration-200"
-              onClick={() => navigate('/maintenance')}
+              onClick={() => navigate('/adminmaintenance')}
             >
               Cancel
             </button>
@@ -213,4 +336,4 @@ const Janitorial = () => {
   );
 };
 
-export default Janitorial;
+export default AdminCarpentryform;

@@ -188,7 +188,8 @@ const Maintenance = () => {
         <Sidebar
           isSidebarCollapsed={state.isSidebarCollapsed}
           onToggleSidebar={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
-          menuItems={MENU_ITEMS} // Ensure menuItems is passed correctly
+          menuItems={MENU_ITEMS}
+          title="USER"
         />
         
         <DashboardContent onCardClick={handleNavigation} />

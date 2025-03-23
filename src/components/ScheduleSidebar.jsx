@@ -11,9 +11,9 @@ const ScheduleSidebar = memo(() => (
           key={event} 
           className="p-3 bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative"
         >
-          <div className="absolute left-3 top-3.5 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-          <p className="text-sm text-gray-700 pl-4 font-medium">{event}</p>
-          <span className="text-xs text-gray-400 pl-4">Today 3:00 PM</span>
+          <div className="absolute left-3 top-3.5 w-2 h-2 rounded-full animate-pulse" />
+          <p className="text-sm text-gray-700 pl-4 font-medium"></p>
+          <span className="text-xs text-gray-400 pl-4"></span>
         </div>
       ))}
     </div>

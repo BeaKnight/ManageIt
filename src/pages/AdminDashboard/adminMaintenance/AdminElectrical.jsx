@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const Janitorial = () => {
+const AdminElectrical = () => {
   const navigate = useNavigate();
 
   // State for form inputs
@@ -94,7 +94,7 @@ const Janitorial = () => {
           GENERAL SERVICE OFFICE MANAGEMENT SYSTEM
         </h2>
         <p className="text-sm md:text-base text-center mb-6 md:mb-8">
-          User Request Slip (Janitorial Section) <br className="hidden sm:block" />
+          User Request Slip (Air-Conditioning Section) <br className="hidden sm:block" />
         </p>
 
         {/* Error Message */}
@@ -195,7 +195,7 @@ const Janitorial = () => {
             <button 
               type="button" 
               className="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white px-6 py-2 md:py-3 rounded-lg transition-colors duration-200"
-              onClick={() => navigate('/maintenance')}
+              onClick={() => navigate('/adminmaintenance')}
             >
               Cancel
             </button>
@@ -213,4 +213,4 @@ const Janitorial = () => {
   );
 };
 
-export default Janitorial;
+export default AdminElectrical;

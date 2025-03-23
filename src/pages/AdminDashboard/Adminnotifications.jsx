@@ -32,19 +32,20 @@ const sidebarReducer = (state, action) => {
 const MENU_ITEMS = [
   { 
     text: "Dashboard",
-    to: "/dashboard",
+    to: "/admindashboard",
     icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
   },
   {
     text: "Notifications",
-    to: "/notifications",
+    to: "/adminnotifications",
     icon: "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
   },
   {
     text: "Schedules",
-    to: "/schedules",
+    to: "/adminschedules",
     icon: "M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z M16 2v4 M3 10h18 M8 2v4 M17 14h-6 M13 18H7 M7 14h.01 M17 18h.01"
   },
+  { text: "Requests", to: "/requests", icon: "M9 2h6a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2 M12 11h4 M12 16h4 M8 11h.01 M8 16h.01"},
   {
     text: "Settings",
     to: "/settings",
@@ -194,7 +195,7 @@ const DashboardContent = memo(({ onCardClick }) => (
 ));
 
 // Main Component
-const Notifications = () => {
+const AdminNotifications = () => {
   const navigate = useNavigate();
   const [state, dispatch] = useReducer(sidebarReducer, {
     isSidebarCollapsed: true,
@@ -218,7 +219,7 @@ const Notifications = () => {
           isSidebarCollapsed={state.isSidebarCollapsed}
           onToggleSidebar={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
           menuItems={MENU_ITEMS}
-          title="USER"
+          title="ADMIN"
         />
         
         <DashboardContent onCardClick={handleNavigation} />
@@ -227,4 +228,4 @@ const Notifications = () => {
   );
 };
 
-export default Notifications;
+export default AdminNotifications;
