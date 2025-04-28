@@ -32,8 +32,7 @@ const SidebarItem = memo(({ item, isSidebarCollapsed }) => (
 const Sidebar = memo(({ 
   isSidebarCollapsed, 
   onToggleSidebar,
-  menuItems,
-  title // Add title prop
+  menuItems = [], // Default to an empty array if menuItems is not passed
 }) => (
   <aside className={`hidden md:block bg-gray-900 text-white transition-[width] duration-300 ease-in-out relative h-full z-20 ${
     isSidebarCollapsed ? 'w-16' : 'w-64'
@@ -47,20 +46,18 @@ const Sidebar = memo(({
           {isSidebarCollapsed ? '☰' : 'Collapse'}
         </button>
 
-        <h2 className={`text-sm md:text-base font-bold mb-4 transition-opacity ${
-          !isSidebarCollapsed ? 'opacity-100' : 'opacity-0'
-        }`}>
-          {title} 
-        </h2>
-
         <nav className="space-y-2">
-          {menuItems.map((item) => (
-            <SidebarItem
-              key={item.text}
-              item={item}
-              isSidebarCollapsed={isSidebarCollapsed}
-            />
-          ))}
+          {menuItems.length > 0 ? (
+            menuItems.map((item) => (
+              <SidebarItem
+                key={item.text}
+                item={item}
+                isSidebarCollapsed={isSidebarCollapsed}
+              />
+            ))
+          ) : (
+            <div className="text-gray-400">No items available</div>
+          )}
         </nav>
       </div>
 

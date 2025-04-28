@@ -3,212 +3,221 @@ import { useNavigate } from "react-router-dom";
 
 function SignupPage() {
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-  // State for form inputs
-  const [full_name, setFullName] = useState("");
-  const [position, setPosition] = useState("");
-  const [office, setOffice] = useState("");
-  const [contact_number, setContactNumber] = useState("");
-  const [password, setPassword] = useState("");
-  const [password_confirmation, setConfirmPassword] = useState("");
-  const [role, setRole] = useState("");
+  // Form input states
+  const [form, setForm] = useState({
+    full_name: "",
+    username: "",
+    email: "",
+    position: "",
+    office: "",
+    contact_number: "",
+    password: "",
+    password_confirmation: "",
+    role_id: "",
+  });
 
-  // State for handling errors and loading
+  // Other states
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
   const [showPassword, setShowPassword] = useState(false);
 
-  // Handle form submission
+  const roles = [
+    { label: "Select Role", value: "", disabled: true },
+    { label: "Admin", value: 1 },
+    { label: "Head", value: 2 },
+    { label: "Staff", value: 3 },
+    { label: "Requester", value: 4 },
+  ];
+
+  const offices = [
+    { label: "Select Office", value: "", disabled: true },
+    { label: "College of Engineering", value: "College of Engineering" },
+    { label: "College of Business Administration", value: "College of Business Administration" },
+    { label: "College of Nursing", value: "College of Nursing" },
+    { label: "College of Arts and Sciences", value: "College of Arts and Sciences" },
+    { label: "College of Maritime Education", value: "College of Maritime Education" },
+    { label: "College of Computer Studies", value: "College of Computer Studies" },
+    { label: "College of Criminal Justice Education", value: "College of Criminal Justice Education" },
+    { label: "College of Teacher Education", value: "College of Teacher Education" },
+    { label: "General Service Office", value: "General Service Office" },
+  ];
+
+  const positions = [
+    { label: "Select Position", value: "", disabled: true },
+    { label: "Faculty", value: "Faculty" },
+    { label: "Staff", value: "Staff" },
+  ];
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const isValidEmail = (email) => /\S+@\S+\.\S+/.test(email);
+  const isNumeric = (val) => /^[0-9]+$/.test(val);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setSuccessMessage("");
 
-    // Form validation
-    if (!full_name || !position || !office || !contact_number || !password || !password_confirmation || !role) {
-      setError("Please fill in all fields");
+    const {
+      full_name,
+      username,
+      email,
+      position,
+      office,
+      contact_number,
+      password,
+      password_confirmation,
+      role_id,
+    } = form;
+
+    // Simple form validation
+    if (Object.values(form).some((field) => !field)) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      setError("Invalid email format.");
+      return;
+    }
+
+    if (!isNumeric(contact_number)) {
+      setError("Contact number should only contain digits.");
       return;
     }
 
     if (password !== password_confirmation) {
-      setError("Passwords do not match");
+      setError("Passwords do not match.");
       return;
     }
 
     try {
       setIsLoading(true);
-      setError("");
-
-      // Make API request to backend
-      const response = await fetch('http://192.168.127.187:8000/api/register', {
-        method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/register`, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-          
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
-        body: JSON.stringify({
-          full_name,
-          position,
-          office,
-          contact_number,
-          password,
-          password_confirmation,
-          role
-        }),
-        mode: 'cors'
+        body: JSON.stringify(form),
+        mode: "cors",
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Signup failed");
+        throw new Error(data.message || "Signup failed.");
       }
 
-      // Redirect to login page on success
-      navigate('/loginpage');
-
+      setSuccessMessage("Signup successful! Redirecting to login...");
+      setTimeout(() => navigate("/loginpage"), 2000);
     } catch (err) {
-      setError(err.message || "An error occurred during signup");
+      setError(err.message || "An unexpected error occurred.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Toggle password visibility
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-gray-100">
-      {/* Title */}
-      <h1 className="text-center text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-700 mb-20">
+      <h1 className="text-center text-2xl font-bold text-gray-700 mb-10">
         JOSE RIZAL MEMORIAL STATE UNIVERSITY
         <br />
         GENERAL SERVICE OFFICE MANAGEMENT SYSTEM
       </h1>
 
-      {/* Responsive Signup Container */}
-      <div className="w-full max-w-md sm:max-w-lg md:max-w-xl bg-white shadow-lg rounded-xl p-6 sm:p-8 md:p-10 
-                    border border-gray-200 transition-all duration-300">
-        
-        {/* Responsive Form Title */}
-        <h2 className="text-center text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-6">
-          SIGNUP ACCOUNT
-        </h2>
-        
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-50 text-red-500 p-3 rounded-lg mb-4 text-sm">
-            {error}
+      <div className="w-full max-w-md bg-white shadow-lg rounded-xl p-8 border border-gray-200">
+        <h2 className="text-center text-xl font-bold text-gray-800 mb-6">SIGNUP ACCOUNT</h2>
+
+        {error && <div className="bg-red-50 text-red-500 p-3 rounded-lg mb-4 text-sm">{error}</div>}
+        {successMessage && (
+          <div className="bg-green-50 text-green-600 p-3 rounded-lg mb-4 text-sm">
+            {successMessage}
           </div>
         )}
 
-        {/* Form - Added onSubmit handler */}
-        <form onSubmit={handleSubmit}>
-          {/* Input Fields Container */}
-          <div className="space-y-5 sm:space-y-6">
-            {/* Full Name Input */}
-            <div className="flex items-center border-2 border-gray-200 rounded-lg p-3 sm:p-3.5 hover:border-blue-300 
-                          transition-colors duration-200">
-              <input
-                type="text"
-                placeholder="Full Name"
-                className="w-full outline-none text-sm sm:text-base"
-                value={full_name}
-                onChange={(e) => setFullName(e.target.value)}
-              />
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {[
+            { name: "full_name", placeholder: "Full Name" },
+            { name: "username", placeholder: "Username" },
+            { name: "email", placeholder: "Email", type: "email" },
+            { name: "contact_number", placeholder: "Contact Number" },
+          ].map(({ name, placeholder, type = "text" }) => (
+            <input
+              key={name}
+              name={name}
+              value={form[name]}
+              onChange={handleChange}
+              placeholder={placeholder}
+              type={type}
+              className="w-full p-3 border border-gray-200 rounded-lg outline-none text-sm"
+            />
+          ))}
 
-            {/* Position Input */}
-            <div className="flex items-center border-2 border-gray-200 rounded-lg p-3 sm:p-3.5 hover:border-blue-300 
-                          transition-colors duration-200">
-              <input
-                type="text"
-                placeholder="Position"
-                className="w-full outline-none text-sm sm:text-base"
-                value={position}
-                onChange={(e) => setPosition(e.target.value)}
-              />
-            </div>
-
-            {/* Office Input */}
-            <div className="flex items-center border-2 border-gray-200 rounded-lg p-3 sm:p-3.5 hover:border-blue-300 
-                          transition-colors duration-200">
-              <input
-                type="text"
-                placeholder="Office"
-                className="w-full outline-none text-sm sm:text-base"
-                value={office}
-                onChange={(e) => setOffice(e.target.value)}
-              />
-            </div>
-
-            {/* Contact Number Input */}
-            <div className="flex items-center border-2 border-gray-200 rounded-lg p-3 sm:p-3.5 hover:border-blue-300 
-                          transition-colors duration-200">
-              <input
-                type="text"
-                placeholder="Contact Number"
-                className="w-full outline-none text-sm sm:text-base"
-                value={contact_number}
-                onChange={(e) => setContactNumber(e.target.value)}
-              />
-            </div>
-
-            {/* Password Input with Toggle */}
-            <div className="flex items-center border-2 border-gray-200 rounded-lg p-3 sm:p-3.5 hover:border-blue-300 
-                          transition-colors duration-200">
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                className="w-full outline-none text-sm sm:text-base"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <button 
-                type="button" 
-                onClick={togglePasswordVisibility}
-                className="focus:outline-none text-gray-500 hover:text-gray-700 transition-colors duration-200"
+          {/* Dropdowns */}
+          {[{ name: "office", options: offices }, { name: "position", options: positions }, { name: "role_id", options: roles }].map(
+            ({ name, options }) => (
+              <select
+                key={name}
+                name={name}
+                value={form[name]}
+                onChange={handleChange}
+                className="w-full p-3 border border-gray-200 rounded-lg outline-none text-sm bg-white"
               >
-                {showPassword ? "Hide" : "Show"}
-              </button>
-            </div>
+                {options.map((opt) => (
+                  <option key={opt.value} value={opt.value} disabled={opt.disabled}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            )
+          )}
 
-            {/* Confirm Password Input */}
-            <div className="flex items-center border-2 border-gray-200 rounded-lg p-3 sm:p-3.5 hover:border-blue-300 
-                          transition-colors duration-200">
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Confirm Password"
-                className="w-full outline-none text-sm sm:text-base"
-                value={password_confirmation}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-            </div>
-
-            {/* Role Input */}
-            <div className="flex items-center border-2 border-gray-200 rounded-lg p-3 sm:p-3.5 hover:border-blue-300 
-                          transition-colors duration-200">
-              <input
-                type="text"
-                placeholder="Role"
-                className="w-full outline-none text-sm sm:text-base"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-              />
-            </div>
+          {/* Password */}
+          <div className="flex items-center border border-gray-200 rounded-lg">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              placeholder="Password"
+              className="w-full p-3 outline-none text-sm"
+            />
+            <button
+              type="button"
+              onClick={togglePasswordVisibility}
+              className="pr-3 text-sm text-gray-500"
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
           </div>
 
-          {/*  Signup Button */}
+          {/* Confirm Password */}
+          <input
+            type={showPassword ? "text" : "password"}
+            name="password_confirmation"
+            value={form.password_confirmation}
+            onChange={handleChange}
+            placeholder="Confirm Password"
+            className="w-full p-3 border border-gray-200 rounded-lg outline-none text-sm"
+          />
+
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full mt-6 sm:mt-7 bg-green-500 hover:bg-green-600 text-white 
-                    py-2.5 sm:py-3 rounded-lg text-sm sm:text-base transition-colors duration-300
-                    disabled:bg-green-300 disabled:cursor-not-allowed"
+            className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg text-sm transition-colors duration-300 disabled:bg-green-300"
           >
-            {isLoading ? "LOADING..." : "SIGNUP"}
+            {isLoading ? "Processing..." : "Signup"}
           </button>
         </form>
       </div>
@@ -217,3 +226,4 @@ function SignupPage() {
 }
 
 export default SignupPage;
+ 

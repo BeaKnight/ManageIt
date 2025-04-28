@@ -3,6 +3,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar';
 import Icon from '../../components/Icon';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 // Custom Hooks
 const useClickOutside = (ref, handler) => {
   useEffect(() => {
@@ -46,6 +47,7 @@ const MENU_ITEMS = [
     icon: "M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z M16 2v4 M3 10h18 M8 2v4 M17 14h-6 M13 18H7 M7 14h.01 M17 18h.01"
   },
   { text: "Requests", to: "/requests", icon: "M9 2h6a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2 M12 11h4 M12 16h4 M8 11h.01 M8 16h.01"},
+  { text: "Reports", to: "/report", icon: "M13 17V9 M18 17V5 M3 3v16a2 2 0 0 0 2 2h16 M8 17v-3"},
   {
     text: "Settings",
     to: "/settings",
@@ -227,7 +229,7 @@ const MaintenanceRequestsList = ({ token }) => {
   const [selectedRequest, setSelectedRequest] = useState(null);
 
   useEffect(() => {
-    fetch("http://192.168.127.187:8000/api/maintenance-requests?status=Pending", {
+    fetch(`${API_BASE_URL}/maintenance-requests?status=Pending`, {
       headers: {
         "Authorization": `Bearer ${token}`,
         "Accept": "application/json"
@@ -250,7 +252,7 @@ const MaintenanceRequestsList = ({ token }) => {
   }, [token]);
 
   const handleRequestClick = (id) => {
-    fetch(`http://192.168.127.187:8000/api/maintenance-requests/${id}`, {
+    fetch(`${API_BASE_URL}/maintenance-requests/${id}`, {
       headers: {
         "Authorization": `Bearer ${token}`,
         "Accept": "application/json"
@@ -275,7 +277,7 @@ const MaintenanceRequestsList = ({ token }) => {
 
   return (
     <div>
-      <h2>Pending Maintenance Requests</h2>
+      <h2>Pending User Requests</h2>
       <ul>
         {requests.map(request => (
           <li key={request.id} onClick={() => handleRequestClick(request.id)}>
@@ -298,7 +300,7 @@ const MaintenanceRequestsList = ({ token }) => {
   );
 };
 
-const AdminRequests = ({ token }) => {
+const StaffRequests = ({ token }) => {
   const navigate = useNavigate();
   const [state, dispatch] = useReducer(sidebarReducer, {
     isSidebarCollapsed: true,
@@ -307,8 +309,9 @@ const AdminRequests = ({ token }) => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
+
   useEffect(() => {
-    fetch("http://192.168.127.187:8000/api/maintenance-requests?status=Pending", {
+    fetch(`${API_BASE_URL}/maintenance-requests?status=Pending`, {
       headers: {
         "Authorization": `Bearer ${token}`,
         "Accept": "application/json"
@@ -362,4 +365,4 @@ const AdminRequests = ({ token }) => {
 };
 
 
-export default AdminRequests;
+export default StaffRequests;
