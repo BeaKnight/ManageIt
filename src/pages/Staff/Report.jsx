@@ -1,6 +1,4 @@
-
-import React from "react";
-import { useState, useReducer, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useReducer, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate, NavLink } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import Icon from "../../components/Icon";
@@ -384,7 +382,6 @@ const RequestsTable = ({ onRowClick, requests, showActions }) => (
     </table>
   </div>
 );
-
 const UserRequestAnalysis = ({ requests }) => {
   // Group requests by user and analyze them
   const analyzeUserRequests = () => {
@@ -429,31 +426,69 @@ const UserRequestAnalysis = ({ requests }) => {
     return sortedUsers;
   };
   
-  const users = analyzeUserRequests();
+  // Use useMemo to recalculate users when requests change
+  const users = useMemo(() => analyzeUserRequests(), [requests]);
+  
   const [expandedUser, setExpandedUser] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('totalRequests');
   const [sortDirection, setSortDirection] = useState('desc');
   const [viewMode, setViewMode] = useState("chart");
+  const [showOfficeDropdown, setShowOfficeDropdown] = useState(false);
+  const [selectedOffices, setSelectedOffices] = useState([]);
+  const searchRef = useRef(null);
 
-  // Filter and sort users
-  const filteredUsers = users
-    .filter(user => 
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.office.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .sort((a, b) => {
-      const multiplier = sortDirection === 'asc' ? 1 : -1;
-      
-      if (sortBy === 'name') {
-        return multiplier * a.name.localeCompare(b.name);
-      } else if (sortBy === 'office') {
-        return multiplier * a.office.localeCompare(b.office);
-      } else {
-        return multiplier * (a[sortBy] - b[sortBy]);
+  // Extract all unique offices for the dropdown
+  const offices = useMemo(() => {
+    const officeSet = new Set();
+    users.forEach(user => {
+      if (user.office) {
+        officeSet.add(user.office);
       }
     });
+    return Array.from(officeSet).sort();
+  }, [users]);
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowOfficeDropdown(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [searchRef]);
+
+  // Filter and sort users based on selected offices and search term
+  const filteredUsers = useMemo(() => {
+    return users
+      .filter(user => {
+        // If no offices are selected, show all users
+        const officeMatch = selectedOffices.length === 0 || selectedOffices.includes(user.office);
+        
+        // Match search term across name or office
+        const searchMatch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           user.office.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        return officeMatch && searchMatch;
+      })
+      .sort((a, b) => {
+        const multiplier = sortDirection === 'asc' ? 1 : -1;
+        
+        if (sortBy === 'name') {
+          return multiplier * a.name.localeCompare(b.name);
+        } else if (sortBy === 'office') {
+          return multiplier * a.office.localeCompare(b.office);
+        } else {
+          return multiplier * (a[sortBy] - b[sortBy]);
+        }
+      });
+  }, [users, selectedOffices, searchTerm, sortBy, sortDirection]);
 
   const handleSort = (field) => {
     if (sortBy === field) {
@@ -483,6 +518,22 @@ const UserRequestAnalysis = ({ requests }) => {
         setExpandedUser(user.name);
       }
     }
+  };
+
+  // Toggle office selection in the multi-select dropdown
+  const toggleOfficeSelection = (office) => {
+    setSelectedOffices(prevSelected => {
+      if (prevSelected.includes(office)) {
+        return prevSelected.filter(o => o !== office);
+      } else {
+        return [...prevSelected, office];
+      }
+    });
+  };
+
+  // Clear all selected offices
+  const clearOfficeSelection = () => {
+    setSelectedOffices([]);
   };
 
   const SortIcon = ({ field }) => {
@@ -532,7 +583,9 @@ const UserRequestAnalysis = ({ requests }) => {
     };
   };
   
-  const chartData = prepareChartData();
+  // Memoize chart data to avoid unnecessary recalculations
+  const chartData = useMemo(() => prepareChartData(), [filteredUsers]);
+  
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -542,7 +595,9 @@ const UserRequestAnalysis = ({ requests }) => {
       },
       title: {
         display: true,
-        text: 'Top 10 Users by Request Status (Click on a bar to see user requests)',
+        text: selectedOffices.length > 0 
+          ? `Top 10 Users by Request Status (Selected Offices: ${selectedOffices.length})` 
+          : 'Top 10 Users by Request Status (All Offices)',
         font: {
           size: 16,
           weight: 'bold',
@@ -580,9 +635,11 @@ const UserRequestAnalysis = ({ requests }) => {
   };
 
   // Filter requests for the selected user
-  const userRequests = selectedUser 
-    ? requests.filter(req => req.requesting_personnel === selectedUser.name)
-    : [];
+  const userRequests = useMemo(() => {
+    return selectedUser 
+      ? requests.filter(req => req.requesting_personnel === selectedUser.name)
+      : [];
+  }, [requests, selectedUser]);
 
   // Clear selected user when returning to chart view
   const handleViewModeChange = (mode) => {
@@ -591,6 +648,20 @@ const UserRequestAnalysis = ({ requests }) => {
     }
     setViewMode(mode);
   };
+
+  // Filter offices based on search term
+  const filteredOffices = useMemo(() => {
+    return offices.filter(office => 
+      office.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [offices, searchTerm]);
+
+  // Log when requests change to help debug
+  useEffect(() => {
+    console.log("Requests updated:", requests.length);
+    console.log("Users found:", users.length);
+    console.log("Selected offices:", selectedOffices);
+  }, [requests, users, selectedOffices]);
 
   return (
     <div className="bg-white rounded-lg shadow p-4 mt-8">
@@ -622,15 +693,121 @@ const UserRequestAnalysis = ({ requests }) => {
         </div>
       </div>
       
-      {/* Search and filters */}
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Search users or offices..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="border border-gray-300 rounded-lg w-full p-2"
-        />
+      {/* Search and multi-select office filter */}
+      <div className="mb-4 relative" ref={searchRef}>
+        <div className="flex items-center mb-2">
+          <div className="flex-1 mr-2">
+            <input
+              type="text"
+              placeholder="Search users or offices..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="border border-gray-300 rounded-lg w-full p-2"
+            />
+          </div>
+          <div className="relative">
+            <button
+              onClick={() => setShowOfficeDropdown(!showOfficeDropdown)}
+              className="flex items-center justify-between px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50"
+            >
+              <span className="mr-2">Office Filter</span>
+              <span className={`text-blue-600 ${selectedOffices.length > 0 ? 'font-bold' : ''}`}>
+                {selectedOffices.length > 0 ? `(${selectedOffices.length})` : ''}
+              </span>
+              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        {/* Showing selected offices as chips */}
+        {selectedOffices.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-2">
+            {selectedOffices.map((office, index) => (
+              <div 
+                key={index} 
+                className="inline-flex items-center bg-blue-100 text-blue-700 px-2 py-1 rounded-lg text-sm"
+              >
+                <span className="mr-1">{office}</span>
+                <button 
+                  onClick={() => toggleOfficeSelection(office)}
+                  className="text-blue-500 hover:text-blue-700 focus:outline-none"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={clearOfficeSelection}
+              className="text-sm text-gray-500 hover:text-red-500 underline"
+            >
+              Clear All
+            </button>
+          </div>
+        )}
+        
+        {/* Office dropdown multi-select */}
+        {showOfficeDropdown && offices.length > 0 && (
+          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+            <div className="p-2 flex justify-between items-center text-xs font-semibold text-gray-500 bg-gray-50 sticky top-0">
+              <span>Select Offices to Display</span>
+              <span>{selectedOffices.length} of {offices.length} selected</span>
+            </div>
+            
+            {filteredOffices.length > 0 ? (
+              filteredOffices.map((office, index) => (
+                <div 
+                  key={index}
+                  className="p-2 hover:bg-blue-50 cursor-pointer text-sm border-t border-gray-100 flex items-center"
+                  onClick={() => toggleOfficeSelection(office)}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedOffices.includes(office)}
+                    onChange={() => {}}
+                    className="mr-2"
+                  />
+                  <span className="mr-2 text-blue-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </span>
+                  {office}
+                </div>
+              ))
+            ) : (
+              <div className="p-3 text-center text-gray-500">No offices found</div>
+            )}
+            
+            {/* Actions at the bottom of dropdown */}
+            <div className="p-2 border-t border-gray-200 bg-gray-50 sticky bottom-0 flex justify-between">
+              <button
+                onClick={clearOfficeSelection}
+                className="text-sm text-gray-600 hover:text-gray-800"
+              >
+                Clear All
+              </button>
+              <button
+                onClick={() => {
+                  // Select all visible offices
+                  setSelectedOffices(filteredOffices);
+                }}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                Select All Visible
+              </button>
+              <button
+                onClick={() => setShowOfficeDropdown(false)}
+                className="text-sm font-medium text-blue-600 hover:text-blue-800"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        )}
       </div>
       
       {/* Selected user notice */}
@@ -648,6 +825,26 @@ const UserRequestAnalysis = ({ requests }) => {
             className="px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg"
           >
             Clear Filter
+          </button>
+        </div>
+      )}
+      
+      {/* Office selection notice if active */}
+      {selectedOffices.length > 0 && !selectedUser && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex justify-between items-center">
+          <div>
+            <p className="font-medium">Filtering by <span className="font-bold">{selectedOffices.length}</span> selected offices</p>
+            <p className="text-sm text-gray-600">
+              {selectedOffices.length <= 3 
+                ? selectedOffices.join(', ')
+                : `${selectedOffices.slice(0, 2).join(', ')} and ${selectedOffices.length - 2} more...`}
+            </p>
+          </div>
+          <button 
+            onClick={clearOfficeSelection}
+            className="px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg"
+          >
+            Clear Offices
           </button>
         </div>
       )}
@@ -762,6 +959,7 @@ const UserRequestAnalysis = ({ requests }) => {
                               </ul>
                             </div>
                           </div>
+                           
                           
                           {/* User request table */}
                           <div className="mt-4">
@@ -975,7 +1173,6 @@ const UserRequestAnalysis = ({ requests }) => {
           </table>
         </div>
       )}
-      
       {/* Stats summary */}
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
@@ -1011,7 +1208,7 @@ const Report = () => {
   });
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTab, setSelectedTab] = useState("Pending");
+  const [selectedTab, setSelectedTab] = useState("All");
   const [viewMode, setViewMode] = useState("chart"); // 'chart' or 'table'
   const [dateFilter, setDateFilter] = useState(null);
   const [dateRange, setDateRange] = useState("all");

@@ -28,6 +28,18 @@ const MENU_ITEMS = [
   { text: "Logout", to: "/loginpage", icon: "M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" },
 ];
 
+// Common airconditioning request types
+const AIRCON_REQUEST_TYPES = [
+  { value: "installation", label: "Air Conditioning Unit Installation" },
+  { value: "repair", label: "Air Conditioning Repair" },
+  { value: "cleaning", label: "Cleaning and Sanitization" },
+  { value: "cooling_issue", label: "Cooling Performance Issues" },
+  { value: "thermostat", label: "Thermostat/Control Problems" },
+  { value: "noise", label: "Unusual Noise" },
+  { value: "water_leakage", label: "Water Leakage" },
+  { value: "others", label: "Others (Please specify)" },
+];
+
 const AirConditioning = () => {
   const navigate = useNavigate();
   const [state, dispatch] = useReducer(sidebarReducer, {
@@ -52,6 +64,7 @@ const AirConditioning = () => {
   // Form input states
   const [formData, setFormData] = useState({
     date_requested: "",
+    request_type: "",
     details: "",
     requesting_personnel: "",
     position: "",
@@ -99,6 +112,23 @@ const AirConditioning = () => {
     }
   };
 
+  // Handle request type change
+  const handleRequestTypeChange = (e) => {
+    const value = e.target.value;
+    updateFormData('request_type', value);
+    
+    // Auto-populate details field for non-"Others" options
+    if (value !== "others") {
+      const selectedOption = AIRCON_REQUEST_TYPES.find(option => option.value === value);
+      if (selectedOption) {
+        updateFormData('details', `${selectedOption.label}\n\nAdditional details: `);
+      }
+    } else {
+      // Clear details if "Others" is selected to let user specify
+      updateFormData('details', "");
+    }
+  };
+
   const markAllFieldsTouched = () => {
     const allTouched = Object.keys(formData).reduce((acc, key) => {
       acc[key] = true;
@@ -116,6 +146,7 @@ const AirConditioning = () => {
     const fieldErrors = {};
     
     if (!formData.date_requested) fieldErrors.date_requested = "Date is required";
+    if (!formData.request_type) fieldErrors.request_type = "Please select a request type";
     if (!formData.details) fieldErrors.details = "Details are required";
     else if (formData.details.length < 10) {
       fieldErrors.details = "Please provide more detailed information (at least 10 characters)";
@@ -252,6 +283,16 @@ const AirConditioning = () => {
         success: ""
       }));
 
+      // Include request_type in the API request
+      const requestData = {
+        ...formData,
+        maintenance_type_id: 4,  // 4 is for Air conditioning
+        // Incorporate the request_type into the details if they didn't already do so
+        details: formData.request_type !== "others" 
+          ? formData.details 
+          : `Request type: Other\n\n${formData.details}`
+      };
+
       // API request
       const response = await fetch(`${API_BASE_URL}/maintenance-requests`, {
         method: "POST",
@@ -260,10 +301,7 @@ const AirConditioning = () => {
           Accept: "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          ...formData,
-          maintenance_type_id: 4,
-        }),
+        body: JSON.stringify(requestData),
         mode: "cors",
       });
 
@@ -340,7 +378,6 @@ const AirConditioning = () => {
       </div>
     );
   }
-  
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Header */}
@@ -399,7 +436,7 @@ const AirConditioning = () => {
             <div className="bg-white p-3 md:p-4 lg:p-5 shadow-lg rounded-lg w-full max-w-sm md:max-w-md lg:max-w-xl transition-all duration-300">
               <h2 className="text-xl md:text-2xl font-bold text-center mb-4 md:mb-6 text-gray-800">
                 User Request Slip <br className="hidden sm:block" />
-                (Air-Conditioning Section)
+                (Air Conditioning Section)
               </h2>
   
               {/* Feedback Messages */}
@@ -448,6 +485,42 @@ const AirConditioning = () => {
                   {status.fieldErrors.date_requested && (
                     <p className="text-sm text-red-500 mt-1">
                       {status.fieldErrors.date_requested}
+                    </p>
+                  )}
+                </div>
+
+                {/* Request Type Dropdown */}
+                <div>
+                  <label className="block text-sm md:text-base font-semibold text-gray-700 mb-2">
+                    Request Type:
+                    {status.fieldErrors.request_type && (
+                      <span className="text-red-500 ml-1">*</span>
+                    )}
+                  </label>
+                  <div className="relative">
+                    <select
+                      className={getInputClasses('request_type')}
+                      value={formData.request_type}
+                      onChange={handleRequestTypeChange}
+                    >
+                      <option value="">-- Select Request Type --</option>
+                      {AIRCON_REQUEST_TYPES.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+                    {status.fieldErrors.request_type && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500">
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  {status.fieldErrors.request_type && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {status.fieldErrors.request_type}
                     </p>
                   )}
                 </div>
